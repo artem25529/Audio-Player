@@ -1,0 +1,21 @@
+@use 'sass:map';
+@use 'sass:color';
+
+$color-palette: ();
+
+@function generate-color-palette($hue, $name, $saturation: 100%) {
+  $palette: (#{$name}-50: hsl($hue, $saturation, 95%));
+
+  @for $i from 1 through 9 {
+    $lightness: 100% - ($i * 10%);
+
+    $palette: map.set(
+      $palette,
+      #{$name}-#{$i * 100},
+      hsl($hue, $saturation, $lightness)
+    );
+  }
+
+  $color-palette: map.merge($color-palette, $palette) !global;
+  @return $color-palette;
+}

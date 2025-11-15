@@ -1,0 +1,24 @@
+@use 'sass:list';
+@use 'sass:map';
+
+$spacings: ();
+$spacing-names: ('sm', 'md', 'lg', 'xl');
+
+@function generate-spacings($min-val: 0.2, $factor: 2) {
+  $values: ($min-val);
+
+  @for $i from 2 through list.length($spacing-names) {
+    $prev: list.nth($values, $i - 1);
+    $values: list.append($values, $prev * $factor);
+  }
+
+  @for $i from 1 through list.length($values) {
+    $spacings: map.set(
+      $spacings,
+      list.nth($spacing-names, $i),
+      list.nth($values, $i) + rem
+    ) !global;
+  }
+
+  @return $spacings;
+}

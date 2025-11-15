@@ -1,0 +1,42 @@
+@use 'sass:map';
+@use 'sass:color';
+@use 'colors';
+@use 'spacings';
+@use 'mixins' as *;
+@forward 'mixins';
+
+$spacings: spacings.generate-spacings();
+$color-palette: colors.generate-color-palette(200, primary);
+$color-palette: colors.generate-color-palette(200, neutral, 0%);
+
+$shadow-color: color.change(map.get($color-palette, neutral-900), $alpha: 0.5);
+
+@mixin box-shadow($name) {
+  @if map.has-key($spacings, $name) {
+    $spacing: map.get($spacings, $name);
+
+    box-shadow: 0 $spacing $spacing $shadow-color;
+  }
+}
+
+@mixin box-shadow-blur($name) {
+  @if map.has-key($spacings, $name) {
+    $spacing: calc(map.get($spacings, $name) * 0.8);
+
+    box-shadow: 0 0 $spacing $shadow-color;
+  }
+}
+
+@mixin border-radius($name) {
+  @if map.has-key($spacings, $name) {
+    border-radius: map.get($spacings, $name);
+  }
+}
+
+@function get-color($color) {
+  @return map.get($color-palette, $color);
+}
+
+@function get-spacing($name) {
+  @return map.get($spacings, $name);
+}
