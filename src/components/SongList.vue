@@ -24,7 +24,11 @@ const song = ref();
 const isPlaying = ref(false);
 
 const rootStyle = computed(() => {
-  return mounted.value ? { height: `${root.value.offsetHeight}px` } : null;
+  const documentWidth = document.documentElement.offsetWidth;
+
+  if (mounted.value && documentWidth > 925) {
+    return { height: `${root.value.offsetHeight}px` };
+  }
 });
 
 const songListStyle = computed(() => {
@@ -136,7 +140,7 @@ function prev() {
 
 <style scoped lang="scss">
 .song-list-wrapper {
-  width: 1100px;
+  width: min(100%, 1100px);
   padding: get-spacing(xl);
   background-color: get-color(neutral-50);
   display: grid;
@@ -144,6 +148,13 @@ function prev() {
   grid-template-columns: repeat(2, 1fr);
 
   @include box-shadow(sm);
+}
+
+@media (max-width: 925px) {
+  .song-list-wrapper {
+    width: clamp(500px, 100%, 600px);
+    grid-template: auto auto / auto;
+  }
 }
 
 .song-list {
