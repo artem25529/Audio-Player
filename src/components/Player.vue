@@ -1,9 +1,10 @@
 <script setup>
 import Slider from './Slider.vue';
 import DropDown from './DropDown.vue';
+import Loader from './Loader.vue';
 
 import { ref, defineProps, defineEmits, computed, watch } from 'vue';
-import { useThrottleFn } from '@vueuse/core';
+import { injectLocal, useThrottleFn } from '@vueuse/core';
 
 const props = defineProps({
   image: {
@@ -22,12 +23,17 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['prev', 'next']);
+const emit = defineEmits(['prev', 'next', 'play', 'pause']);
 
 const rateOptions = [1, 0.75, 0.5, 0.25].map((item) => ({
   label: `${item}x`,
   value: item,
 }));
+
+const loaderStyle = {
+  position: 'absolute',
+  inset: '0',
+};
 
 const audio = ref();
 
@@ -40,6 +46,7 @@ const volumeSliderPos = ref(1);
 const prevVolume = ref(1);
 const playBackRate = ref(1);
 const prevTimestamp = ref();
+const isLoading = ref(false);
 
 const currentTimeSliderPos = computed(() => {
   if (!duration.value) return 0;
@@ -64,13 +71,16 @@ function prev() {
     emit('prev');
   } else {
     prevTimestamp.value = performance.now();
-    currentTime.value = 0;
     audio.value.currentTime = 0;
   }
+
+  currentTime.value = 0;
 }
 
 function next() {
   emit('next');
+
+  currentTime.value = 0;
 }
 
 function oncanplay() {
@@ -121,10 +131,12 @@ function handleEndSeeking(pos) {
 
 function handlePlay() {
   isPlaying.value = true;
+  emit('play');
 }
 
 function handlePause() {
   isPlaying.value = false;
+  emit('pause');
 }
 
 function handleDurationchange() {
@@ -171,6 +183,11 @@ function onended() {
     <audio
       ref="audio"
       :src="track"
+      @progress="isLoading = true"
+      @waiting="isLoading = true"
+      @canplay="isLoading = false"
+      @playing="isLoading = false"
+      @suspend="isLoading = false"
       @play="handlePlay"
       @pause="handlePause"
       @durationchange="handleDurationchange"
@@ -204,7 +221,11 @@ function onended() {
           @click="toggleMute"
           @keydown.space.enter="toggleMute"
         ></i>
-        <Slider :position="volumeSliderPos" @poschanged="changeVolume" />
+        <Slider
+          :position="volumeSliderPos"
+          @poschanged="changeVolume"
+          :style="{ fontSize: '0.9rem' }"
+        />
       </div>
       <div class="player__controls-main">
         <button class="prev-track" type="button" @click="prev">
@@ -217,14 +238,15 @@ function onended() {
           @click="togglePlay"
         >
           <i class="pi" :class="`pi-${isPlaying ? 'pause' : 'play'}`"></i>
+          <Loader :style="loaderStyle" v-show="isLoading" />
         </button>
         <button class="prev-track" type="button" @click="next">
           <i class="pi pi-step-forward-alt"></i>
         </button>
       </div>
       <div class="player__controls-right">
-        <i class="pi pi-stopwatch"></i>
         <DropDown :items="rateOptions" @valchanged="changeRate" />
+        <i class="pi pi-stopwatch"></i>
       </div>
     </div>
   </section>
@@ -284,12 +306,12 @@ function onended() {
 .player__controls-left,
 .player__controls-right {
   flex: 1;
-  padding-inline: 1.8em;
+  padding-inline: 2em;
   display: flex;
   align-items: center;
   gap: get-spacing(md);
 
-  & > :last-child {
+  & > :not(.pi) {
     flex: 1;
   }
 }
@@ -319,6 +341,7 @@ function onended() {
   }
 
   .play-track {
+    position: relative;
     padding: 0.85em;
     background-color: get-color(primary-200);
 

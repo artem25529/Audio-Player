@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watchEffect } from 'vue';
 
 import Player from './Player.vue';
+import PlayIndicator from './PlayIndicator.vue';
 
 const audioModules = import.meta.glob('@/assets/audios/*');
 const audioKeys = Object.keys(audioModules);
@@ -20,6 +21,7 @@ const currAudioSrc = ref();
 const currAudioImg = ref();
 const band = ref();
 const song = ref();
+const isPlaying = ref(false);
 
 const rootStyle = computed(() => {
   return mounted.value ? { height: `${root.value.offsetHeight}px` } : null;
@@ -108,18 +110,24 @@ function prev() {
       :song="song"
       @prev="prev"
       @next="next"
+      @play="isPlaying = true"
+      @pause="isPlaying = false"
     />
     <ul class="song-list" :style="songListStyle">
       <li
-        class="song"
+        class="song-wrapper"
         :class="{ active: idx === currAudioIdx }"
         v-for="(audio, idx) in audioKeys"
         :key="audio"
         @click="currAudioIdx = idx"
       >
-        {{
-          getSongMeta(audio.substring(audio.lastIndexOf('/') + 1)).join(' - ')
-        }}
+        <div class="song">
+          {{
+            getSongMeta(audio.substring(audio.lastIndexOf('/') + 1)).join(' - ')
+          }}
+        </div>
+
+        <PlayIndicator v-show="idx === currAudioIdx" :is-playing="isPlaying" />
       </li>
     </ul>
   </div>
@@ -128,7 +136,7 @@ function prev() {
 
 <style scoped lang="scss">
 .song-list-wrapper {
-  width: min(100%, 1200px);
+  width: 1100px;
   padding: get-spacing(xl);
   background-color: get-color(neutral-50);
   display: grid;
@@ -143,15 +151,16 @@ function prev() {
   overflow: auto;
 }
 
-.song {
+.song-wrapper {
   padding: get-spacing(md) get-spacing(lg);
   font-style: italic;
   font-size: 1.1em;
   cursor: pointer;
+  display: flex;
+  align-items: center;
 
   @include transition-fast;
   @include border-radius(md);
-  @include text-trunc-ellipsis;
 
   &:hover {
     background-color: get-color(neutral-100);
@@ -160,5 +169,9 @@ function prev() {
   &.active {
     background-color: get-color(primary-100);
   }
+}
+
+.song {
+  flex: 1 1;
 }
 </style>

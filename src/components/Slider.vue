@@ -35,31 +35,25 @@ const trackWidth = ref();
 const thumbWidth = ref();
 const thumbPos = ref(props.position ?? 0);
 
-let disableThumbWatch = false;
-
 watch(
   () => props.position,
   (newVal) => {
-    disableThumbWatch = true;
-    thumbPos.value = newVal;
+    if (newVal !== thumbPos.value) {
+      thumbPos.value = newVal;
+    }
   },
 );
-
-watch(thumbPos, (newVal) => {
-  if (disableThumbWatch) {
-    disableThumbWatch = false;
-    return;
-  }
-
-  emit('poschanged', newVal);
-});
 
 const thumbStyle = computed(() => ({
   translate: `${thumbPos.value * trackWidth.value ?? 0}px`,
 }));
 
+const trackStyle = computed(() => ({
+  width: trackWidth.value ? `${trackWidth.value}px` : '',
+}));
+
 const passedStyle = computed(() => ({
-  translate: `${thumbPos.value * 100 - 100}%`,
+  width: `${thumbPos.value * 100}%`,
 }));
 
 const sliderStyle = props.width
@@ -80,7 +74,10 @@ function handlePointerMove(e) {
   const movement = e.movementX / trackWidth.value;
   const newThumbPos = Math.min(Math.max(0, thumbPos.value + movement), 1);
 
-  thumbPos.value = newThumbPos;
+  if (thumbPos.value !== newThumbPos) {
+    thumbPos.value = newThumbPos;
+    emit('poschanged', newThumbPos);
+  }
 }
 
 const handlePointerMoveThrottled = useThrottleFn(handlePointerMove, 10);
@@ -95,11 +92,16 @@ function handlePointerUp(e) {
 
 function handleClick(e) {
   const halfThumbWidth = (thumbWidth.value ?? 0) / 2;
+  const newThumbPos = (e.offsetX - halfThumbWidth) / trackWidth.value;
 
-  thumbPos.value = (e.offsetX - halfThumbWidth) / trackWidth.value;
+  if (newThumbPos !== thumbPos.value) {
+    thumbPos.value = newThumbPos;
+    emit('poschanged', newThumbPos);
+  }
 }
 
 function handleKeyDown(e) {
+  const oldVal = thumbPos.value;
   const step = 0.05;
 
   switch (e.key) {
@@ -120,6 +122,10 @@ function handleKeyDown(e) {
       }
 
       break;
+  }
+
+  if (oldVal !== thumbPos.value) {
+    emit('poschanged', thumbPos.value);
   }
 }
 
@@ -159,9 +165,9 @@ onUnmounted(() => {
     :style="sliderStyle"
     @click.self="handleClick"
   >
-    <div class="slider__track">
-      <div class="slider__passed" :style="passedStyle"></div>
-    </div>
+    <div class="slider__passed" :style="passedStyle"></div>
+
+    <div class="slider__track" :style="trackStyle"></div>
     <div
       class="slider__thumb"
       tabindex="0"
@@ -177,42 +183,40 @@ onUnmounted(() => {
 </template>
 
 <style scoped lang="scss">
-$hover-scale: 1.15;
+$hover-scale: 1.13;
 
 .slider {
   display: grid;
+  position: relative;
+  background-color: get-color(neutral-300);
+
+  @include border-radius(md);
 
   &:hover {
-    .slider__track {
-      scale: 1 $hover-scale;
-    }
+    scale: 1 $hover-scale;
 
     .slider__thumb {
-      scale: $hover-scale;
+      scale: $hover-scale 1;
     }
   }
 }
 
 .slider__track {
-  height: 0.5rem;
-  background-color: get-color(neutral-300);
-  overflow: hidden;
-  position: relative;
+  height: 0.5em;
   pointer-events: none;
-
-  @include border-radius(md);
 }
 
 .slider__passed {
   background-color: get-color(primary-500);
+  border-radius: inherit;
+  position: absolute;
   width: 100%;
   height: 100%;
-  translate: -100%;
   pointer-events: none;
 }
 
 .slider__thumb {
-  height: 0.8rem;
+  height: 0.8em;
   aspect-ratio: 1;
   border-radius: 50%;
   background-color: get-color(neutral-300);
