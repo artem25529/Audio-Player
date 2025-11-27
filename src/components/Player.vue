@@ -263,6 +263,7 @@ function onended() {
   width: 100%;
   aspect-ratio: 1;
   object-fit: cover;
+  box-shadow: 0 0 0.2em get-color(neutral-500);
 }
 
 .player__info {
