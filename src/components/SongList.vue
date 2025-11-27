@@ -5,7 +5,8 @@ import Player from './Player.vue';
 import PlayIndicator from './PlayIndicator.vue';
 
 const audioModules = import.meta.glob('@/assets/audios/*');
-const audioKeys = Object.keys(audioModules);
+const audioKeys = Object.keys(audioModules).sort();
+
 const audioQty = audioKeys.length;
 const imageModules = import.meta.glob('@/assets/images/*');
 const imageKeys = Object.keys(imageModules);
