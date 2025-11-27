@@ -23,16 +23,17 @@ const band = ref();
 const song = ref();
 const isPlaying = ref(false);
 
-const rootStyle = computed(() => {
-  const documentWidth = document.documentElement.offsetWidth;
-
-  if (mounted.value && documentWidth > 925) {
-    return { height: `${root.value.offsetHeight}px` };
-  }
-});
-
 const songListStyle = computed(() => {
-  return mounted.value ? { display: 'unset' } : null;
+  if (!mounted.value) return;
+
+  const rootComputedStyle = getComputedStyle(root.value);
+
+  const targetHeight =
+    parseFloat(rootComputedStyle.height) -
+    (parseFloat(rootComputedStyle.paddingTop) +
+      parseFloat(rootComputedStyle.paddingBottom));
+
+  return { display: 'unset', height: `${targetHeight}px` };
 });
 
 onMounted(() => {
@@ -101,12 +102,7 @@ function prev() {
 </script>
 
 <template>
-  <div
-    ref="root"
-    class="song-list-wrapper"
-    v-if="audioKeys?.length"
-    :style="rootStyle"
-  >
+  <div ref="root" class="song-list-wrapper" v-if="audioKeys?.length">
     <player
       :image="currAudioImg"
       :track="currAudioSrc"
